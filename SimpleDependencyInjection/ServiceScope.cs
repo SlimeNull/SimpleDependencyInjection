@@ -9,7 +9,7 @@ namespace SimpleDependencyInjection
             this.serviceProvider = serviceProvider;
             scopedServices = new Dictionary<Type, object>();
 
-            serviceProvider.currentScope = this;
+            serviceProvider.OpenScope(this);
         }
 
         ~ServiceScope()
@@ -21,8 +21,21 @@ namespace SimpleDependencyInjection
         private readonly Dictionary<Type, object> scopedServices;
 
         IServiceProvider IServiceScope.ServiceProvider => serviceProvider;
-        public object? GetService(Type serviceType) =>
-            scopedServices.GetOrAdd(serviceType, () => ServiceUtils.CreateServiceInstance(serviceProvider, serviceType));
+        internal object? GetScopedService(Type serviceType, out bool createNew)
+        {
+            if (scopedServices.TryGetValue(serviceType, out var service))
+            {
+                createNew = false;
+                return service;
+            }
+            else
+            {
+                service = ServiceUtils.CreateServiceInstance(serviceProvider, serviceType);
+                scopedServices.Add(serviceType, service);
+                createNew = true;
+                return service;
+            }
+        }
 
         public void Dispose()
         {
@@ -35,8 +48,7 @@ namespace SimpleDependencyInjection
             if (disposing)
                 return;
 
-            if (serviceProvider.currentScope == this)
-                serviceProvider.currentScope = null;
+            serviceProvider.CloseScope(this);
         }
     }
 }

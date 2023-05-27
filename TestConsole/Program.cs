@@ -35,6 +35,22 @@ class ScopedServiceA
 
 }
 
+class PropertyInjectServiceA
+{
+    [ServiceInject]
+    public ServiceA? ServiceA { get; set; }
+
+    [ServiceInject]
+    public PropertyInjectServiceB? PropertyInjectServiceB { get; set; }
+}
+
+class PropertyInjectServiceB
+{
+    // 循环依赖注入
+    [ServiceInject]
+    public PropertyInjectServiceA? PropertyInjectServiceA { get; set; }
+}
+
 internal class Program
 {
     private static void Main(string[] args)
@@ -47,6 +63,8 @@ internal class Program
         serviceCollection.AddSingleton<ServiceB>();
         serviceCollection.AddSingleton<ServiceC>();
         serviceCollection.AddScoped<ScopedServiceA>();
+        serviceCollection.AddSingleton<PropertyInjectServiceA>();
+        serviceCollection.AddSingleton<PropertyInjectServiceB>();
 
         IServiceProvider services = serviceCollection.BuildServiceProvider();
 
@@ -71,5 +89,11 @@ internal class Program
             Console.WriteLine(object.ReferenceEquals(scopedService, scopedService2));
             Console.WriteLine(scopedService.GetHashCode());
         }
+
+        Console.WriteLine("Property inject test");
+        var propInjectService = services.GetRequiredService<PropertyInjectServiceA>();
+
+        if (propInjectService.PropertyInjectServiceB != null)
+            Console.WriteLine("属性成功注入");
     }
 }

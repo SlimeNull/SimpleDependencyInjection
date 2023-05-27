@@ -43,5 +43,31 @@ namespace SimpleDependencyInjection
 
             return constructor.Invoke(arguments);
         }
+
+        public static void InjectServiceMembers(ServiceProvider serviceProvider, object serviceInstance)
+        {
+            Type serviceType = serviceInstance.GetType();
+
+            FieldInfo[] fields = serviceType.GetFields();
+            PropertyInfo[] properties = serviceType.GetProperties();
+
+            foreach (var field in fields)
+            {
+                if (field.GetCustomAttribute<ServiceInjectAttribute>() is not ServiceInjectAttribute)
+                    continue;
+
+                field.SetValue(serviceInstance, serviceProvider.GetService(field.FieldType));
+            }
+
+            foreach (var property in properties)
+            {
+                if (property.GetCustomAttribute<ServiceInjectAttribute>() is not ServiceInjectAttribute)
+                    continue;
+                if (!property.CanWrite)
+                    throw new InvalidOperationException($"Couldn't inject service for type {serviceType.FullName}, property {property.Name} has no setter");
+
+                property.SetValue(serviceInstance, serviceProvider.GetService(property.PropertyType));
+            }
+        }
     }
 }
