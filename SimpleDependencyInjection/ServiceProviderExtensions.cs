@@ -11,10 +11,19 @@ namespace SimpleDependencyInjection
         public static TService? GetService<TService>(this IServiceProvider serviceProvider) where TService : class =>
             serviceProvider.GetService(typeof(TService)) as TService;
 
-        public static object GetRequiredService(this IServiceProvider serviceProvider, Type serviceType) =>
-            serviceProvider.GetService(serviceType) ?? throw new InvalidOperationException($"Service or it's dependencies are not registered: {serviceType.FullName}");
+        public static object GetRequiredService(this IServiceProvider serviceProvider, Type serviceType)
+        {
+            if (serviceProvider is IRequiredServiceProvider requiredServiceProvider)
+                return requiredServiceProvider.GetRequiredService(serviceType);
+
+            object? service = serviceProvider.GetService(serviceType);
+            if (service == null)
+                throw new InvalidOperationException($"Service is not registered. Service: {serviceType}");
+
+            return service;
+        }
         public static TService GetRequiredService<TService>(this IServiceProvider serviceProvider) where TService : class =>
-            serviceProvider.GetService(typeof(TService)) as TService ?? throw new InvalidOperationException($"Service or it's dependencies are not registered: {typeof(TService).FullName}");
+            (TService)serviceProvider.GetRequiredService(typeof(TService));
 
         public static IServiceScope CreateScope(this IServiceProvider serviceProvider)
         {

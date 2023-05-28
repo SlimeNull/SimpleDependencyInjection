@@ -1,7 +1,11 @@
 ﻿namespace SimpleDependencyInjection
 {
+    public interface IRequiredServiceProvider : IServiceProvider
+    {
+        object GetRequiredService(Type serviceType);
+    }
 
-    public partial class ServiceProvider : IServiceProvider
+    public partial class ServiceProvider : IServiceProvider, IRequiredServiceProvider
     {
         public ServiceProvider(ServiceCollection serviceCollection)
         {
@@ -12,9 +16,9 @@
             singletonServices = new Dictionary<Type, object>();
         }
 
-        public object? GetServiceCore(Type serviceType)
+        public object? GetService(Type serviceType)
         {
-            if (serviceCollection.FirstOrDefault(item => item.ServiceType == serviceType) is not ServiceItem registeredService)
+            if (!ServiceUtils.FindRegisteredService(serviceCollection, serviceType, out ServiceItem? registeredService))
                 return null;
 
             bool createNew = false;
@@ -22,36 +26,74 @@
             if (registeredService.Lifetime == ServiceLifetime.Transient)
             {
                 createNew = true;
-                service = ServiceUtils.CreateServiceInstance(this, serviceType);
+                service = ServiceUtils.CreateServiceInstance(this, registeredService, serviceType);
             }
             else if (registeredService.Lifetime == ServiceLifetime.Singleton)
             {
                 if (!singletonServices.TryGetValue(serviceType, out service))
                 {
                     createNew = true;
-                    service = ServiceUtils.CreateServiceInstance(this, serviceType);
-                    singletonServices.Add(serviceType, service);
+                    service = ServiceUtils.CreateServiceInstance(this, registeredService, serviceType);
+
+                    if (service != null)
+                        singletonServices.Add(serviceType, service);
                 }
             }
             else if (registeredService.Lifetime == ServiceLifetime.Scoped)
             {
                 if (currentScope != null)
                 {
-                    service = currentScope.GetScopedService(serviceType, out createNew);
+                    service = currentScope.GetScopedService(registeredService, serviceType, out createNew);
                 }
             }
 
-            if (createNew && service != null)
+            if (service != null && createNew)
                 ServiceUtils.InjectServiceMembers(this, service);
 
             return service;
         }
 
+        public object GetRequiredService(Type serviceType)
+        {
+            if (!ServiceUtils.FindRegisteredService(serviceCollection, serviceType, out ServiceItem? registeredService))
+                throw new InvalidOperationException($"Service is not registered. Service: {serviceType.FullName}");
 
-        public object? GetService(Type serviceType) => GetServiceCore(serviceType);
+            bool createNew = false;
+            object? service;
+            if (registeredService.Lifetime == ServiceLifetime.Transient)
+            {
+                createNew = true;
+                service = ServiceUtils.CreateRequiredServiceInstance(this, registeredService, serviceType);
+            }
+            else if (registeredService.Lifetime == ServiceLifetime.Singleton)
+            {
+                if (!singletonServices.TryGetValue(serviceType, out service))
+                {
+                    createNew = true;
+                    service = ServiceUtils.CreateRequiredServiceInstance(this, registeredService, serviceType);
+                    singletonServices.Add(serviceType, service);
+                }
+            }
+            else if (registeredService.Lifetime == ServiceLifetime.Scoped)
+            {
+                if (currentScope == null)
+                    throw new InvalidOperationException($"Service scope must be created before getting scoped service. Service: {serviceType}");
 
-        internal readonly ServiceCollection serviceCollection;
-        internal readonly Dictionary<Type, object> singletonServices;
+                service = currentScope.GetRequiredScopedService(registeredService, serviceType, out createNew);
+            }
+            else
+            {
+                throw new InvalidOperationException($"Service lifetime is invalid. Service: {serviceType.FullName}");
+            } 
+
+            if (createNew)
+                ServiceUtils.InjectServiceMembers(this, service);
+
+            return service;
+        }
+
+        private readonly ServiceCollection serviceCollection;
+        private readonly Dictionary<Type, object> singletonServices;
 
         private ServiceScope? currentScope;
 

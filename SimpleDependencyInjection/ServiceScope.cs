@@ -21,7 +21,7 @@ namespace SimpleDependencyInjection
         private readonly Dictionary<Type, object> scopedServices;
 
         IServiceProvider IServiceScope.ServiceProvider => serviceProvider;
-        internal object? GetScopedService(Type serviceType, out bool createNew)
+        internal object? GetScopedService(ServiceItem serviceItem, Type serviceType, out bool createNew)
         {
             if (scopedServices.TryGetValue(serviceType, out var service))
             {
@@ -30,7 +30,29 @@ namespace SimpleDependencyInjection
             }
             else
             {
-                service = ServiceUtils.CreateServiceInstance(serviceProvider, serviceType);
+                service = ServiceUtils.CreateServiceInstance(serviceProvider, serviceItem, serviceType);
+                if (service == null)
+                {
+                    createNew = false;
+                    return null;
+                } 
+
+                scopedServices.Add(serviceType, service);
+                createNew = true;
+                return service;
+            }
+        }
+
+        internal object GetRequiredScopedService(ServiceItem serviceItem, Type serviceType, out bool createNew)
+        {
+            if (scopedServices.TryGetValue(serviceType, out var service))
+            {
+                createNew = false;
+                return service;
+            }
+            else
+            {
+                service = ServiceUtils.CreateRequiredServiceInstance(serviceProvider, serviceItem, serviceType);
                 scopedServices.Add(serviceType, service);
                 createNew = true;
                 return service;

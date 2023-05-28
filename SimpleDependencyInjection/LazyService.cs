@@ -10,7 +10,18 @@ namespace SimpleDependencyInjection
     {
         public LazyService(IServiceProvider serviceProvider)
         {
-            laziedService = new Lazy<TService>(() => serviceProvider.GetService<TService>());
+            laziedService = new Lazy<TService?>(() => serviceProvider.GetService<TService>());
+        }
+
+        private Lazy<TService?> laziedService;
+        public TService? Service => laziedService.Value;
+    }
+
+    public class LazyRequiredService<TService> where TService : class
+    {
+        public LazyRequiredService(IServiceProvider serviceProvider)
+        {
+            laziedService = new Lazy<TService>(() => serviceProvider.GetRequiredService<TService>());
         }
 
         private Lazy<TService> laziedService;

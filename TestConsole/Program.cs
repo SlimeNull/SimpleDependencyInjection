@@ -5,6 +5,7 @@ using SimpleDependencyInjection;
 
 class ServiceA
 {
+    [ServiceConstructor]
     public ServiceA(
         ServiceB serviceB)
     {
@@ -51,6 +52,17 @@ class PropertyInjectServiceB
     public PropertyInjectServiceA? PropertyInjectServiceA { get; set; }
 }
 
+class SomeGenericService<TService> where TService : class
+{
+    public SomeGenericService(
+               TService service)
+    {
+        Service = service;
+    }
+
+    public TService Service { get; }
+}
+
 internal class Program
 {
     private static void Main(string[] args)
@@ -62,9 +74,10 @@ internal class Program
         serviceCollection.AddSingleton<ServiceA>();
         serviceCollection.AddSingleton<ServiceB>();
         serviceCollection.AddSingleton<ServiceC>();
-        serviceCollection.AddScoped<ScopedServiceA>();
         serviceCollection.AddSingleton<PropertyInjectServiceA>();
         serviceCollection.AddSingleton<PropertyInjectServiceB>();
+        serviceCollection.AddScoped<ScopedServiceA>();
+        serviceCollection.AddTransient(typeof(SomeGenericService<>));
 
         IServiceProvider services = serviceCollection.BuildServiceProvider();
 
@@ -95,5 +108,10 @@ internal class Program
 
         if (propInjectService.PropertyInjectServiceB != null)
             Console.WriteLine("属性成功注入");
+
+        Console.WriteLine("Generic service test");
+        var genericService = services.GetRequiredService<SomeGenericService<ServiceA>>();
+
+        Console.WriteLine($"泛型服务创建成功? {genericService != null}");
     }
 }

@@ -67,6 +67,9 @@ namespace SimpleDependencyInjection
                 if (ServiceUtils.GetServiceConstructor(serviceType) is not ConstructorInfo constructor)
                     throw new InvalidOperationException($"Could'n resolve dependency of Service, {serviceType.Name} has no service constructor");
 
+                if (serviceType.IsGenericTypeDefinition)
+                    return;
+
                 detectedServices.Push(serviceType);
                 foreach (ParameterInfo parameter in constructor.GetParameters())
                     EnsureDependenciesCore(parameter.ParameterType, detectedServices);
