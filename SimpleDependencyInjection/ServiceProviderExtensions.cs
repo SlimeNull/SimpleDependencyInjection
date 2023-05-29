@@ -8,8 +8,10 @@ namespace SimpleDependencyInjection
 {
     public static class ServiceProviderExtensions
     {
-        public static TService? GetService<TService>(this IServiceProvider serviceProvider) where TService : class =>
-            serviceProvider.GetService(typeof(TService)) as TService;
+        public static TService? GetService<TService>(this IServiceProvider serviceProvider) where TService : class
+        {
+            return serviceProvider.GetService(typeof(TService)) as TService;
+        }
 
         public static object GetRequiredService(this IServiceProvider serviceProvider, Type serviceType)
         {
@@ -22,8 +24,11 @@ namespace SimpleDependencyInjection
 
             return service;
         }
-        public static TService GetRequiredService<TService>(this IServiceProvider serviceProvider) where TService : class =>
-            (TService)serviceProvider.GetRequiredService(typeof(TService));
+
+        public static TService GetRequiredService<TService>(this IServiceProvider serviceProvider) where TService : class
+        {
+            return (TService)serviceProvider.GetRequiredService(typeof(TService));
+        }
 
         public static IServiceScope CreateScope(this IServiceProvider serviceProvider)
         {

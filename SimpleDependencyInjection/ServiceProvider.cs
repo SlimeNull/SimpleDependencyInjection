@@ -1,13 +1,9 @@
 ﻿namespace SimpleDependencyInjection
 {
-    public interface IRequiredServiceProvider : IServiceProvider
-    {
-        object GetRequiredService(Type serviceType);
-    }
 
     public partial class ServiceProvider : IServiceProvider, IRequiredServiceProvider
     {
-        public ServiceProvider(ServiceCollection serviceCollection)
+        internal ServiceProvider(ServiceCollection serviceCollection)
         {
             if (serviceCollection == null)
                 throw new ArgumentNullException(nameof(serviceCollection));
@@ -18,6 +14,8 @@
 
         public object? GetService(Type serviceType)
         {
+            if (serviceType == null)
+                return null;
             if (!ServiceUtils.FindRegisteredService(serviceCollection, serviceType, out ServiceItem? registeredService))
                 return null;
 
@@ -55,6 +53,8 @@
 
         public object GetRequiredService(Type serviceType)
         {
+            if (serviceType == null)
+                throw new ArgumentNullException(nameof(serviceType));
             if (!ServiceUtils.FindRegisteredService(serviceCollection, serviceType, out ServiceItem? registeredService))
                 throw new InvalidOperationException($"Service is not registered. Service: {serviceType.FullName}");
 

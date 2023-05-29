@@ -6,6 +6,8 @@ namespace SimpleDependencyInjection
     {
         public ServiceItem(Type serviceType, ServiceLifetime lifetime)
         {
+            if (serviceType == null)
+                throw new ArgumentNullException(nameof(serviceType));
             if (!serviceType.IsClass && !serviceType.IsInterface)
                 throw new ArgumentException("Service type must be class or interface");
             if (ServiceUtils.GetServiceConstructor(serviceType) is not ConstructorInfo constructor)
@@ -18,6 +20,8 @@ namespace SimpleDependencyInjection
 
         public ServiceItem(Type serviceType, ServiceLifetime lifetime, ServiceFactory factory)
         {
+            if (serviceType == null)
+                throw new ArgumentNullException(nameof(serviceType));
             if (!serviceType.IsClass && !serviceType.IsInterface)
                 throw new ArgumentException("Service type must be class or interface");
             if (factory == null)

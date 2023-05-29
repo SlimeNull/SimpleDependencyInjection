@@ -1,18 +1,16 @@
 # SimpleDependencyInjection
 
-一个简单的依赖注入框架. 仿照 Microsoft.Extensions.DependencyInjection 所制作.
+A simple dependency injection framework modeled after Microsoft.Extensions.DependencyInjection.
 
-> English Readme: [README_en.md](README_en.md)
+## Usage
 
-## 使用方式
-
-创建一个服务容器.
+Create a service container.
 
 ```csharp
 ServiceCollection serviceCollection = new ServiceCollection();
 ```
 
-注册一些服务.
+Register some services.
 
 ```csharp
 serviceCollection.AddSingleton<ServiceA>();
@@ -23,28 +21,28 @@ serviceCollection.AddSingleton<PropertyInjectServiceA>();
 serviceCollection.AddSingleton<PropertyInjectServiceB>();
 ```
 
-构建服务提供者.
+Build the service provider.
 
 ```csharp
 IServiceProvider services = serviceCollection.BuildServiceProvider();
 ```
 
-获取服务.
+Get services.
 
 ```csharp
 ServiceA serviceA = services.GetService<ServiceA>();
 ```
 
-获取 Scoped 服务
+Get scoped services.
 
 ```csharp
 using (IServiceScope scope = services.CreateScope())
 {
-	ScopedServiceA scopedServiceA = services.GetService<ScopedServiceA>();
+    ScopedServiceA scopedServiceA = services.GetService<ScopedServiceA>();
 }
 ```
 
-显式指定服务容器应该使用的服务构造函数.
+Explicitly specify the service constructor that the service container should use.
 
 ```csharp
 class ServiceA
@@ -60,7 +58,7 @@ class ServiceA
 }
 ```
 
-指定服务中的某个字段或属性应该被注入.
+Specify that a field or property in the service should be injected.
 
 ```csharp
 class PropertyInjectServiceA
@@ -73,9 +71,8 @@ class PropertyInjectServiceA
 }
 ```
 
-## 注意
+## Note
 
-**IServiceProvider 在本库中的实现不是线程安全的.**
+**The implementation of IServiceProvider in this library is not thread-safe.**
 
-这意味着, 尽管字段和属性注入的循环依赖可以被框架所解决, 但是当你的程序涉及到并发, 例如当 A 线程获取一个存在循环依赖的服务 A, 并且在对应操作未返回服务实例的时候 B 线程也尝试获取该服务, 那么 B 线程可能会拿到未完全初始化的服务.
-或者也有可能两个线程会获取到不同的服务实例(尽管它是单例服务)
+This means that while circular dependencies in field and property injection can be resolved by the framework, if your program involves concurrency, such as when thread A gets a service A with a circular dependency and thread B also tries to get that service before the corresponding operation returns the service instance, then thread B may get an incompletely initialized service. It is also possible that two threads will get different service instances even though it is a singleton service.

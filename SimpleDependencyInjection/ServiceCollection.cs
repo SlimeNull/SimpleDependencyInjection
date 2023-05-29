@@ -82,6 +82,9 @@ namespace SimpleDependencyInjection
 
         protected override void InsertItem(int index, ServiceItem item)
         {
+            if (item == null)
+                throw new ArgumentNullException(nameof(item));
+
             EnsureNotAdded(item.ServiceType);
 
             if (item.Factory == null)
