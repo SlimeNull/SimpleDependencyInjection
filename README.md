@@ -40,7 +40,7 @@ ServiceA serviceA = services.GetService<ServiceA>();
 ```csharp
 using (IServiceScope scope = services.CreateScope())
 {
-	ScopedServiceA scopedServiceA = services.GetService<ScopedServiceA>();
+    ScopedServiceA scopedServiceA = services.GetService<ScopedServiceA>();
 }
 ```
 
